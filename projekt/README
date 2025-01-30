@@ -1,0 +1,58 @@
+DO DZIAŁANIA PROJEKTU POTRZEBNE JEST POBRANIE - pip install pygame
+
+
+
+# Projekt: Porównanie algorytmów grafowych w znajdowaniu ścieżki w labiryncie
+
+## Cel projektu
+Celem projektu było zaimplementowanie i porównanie efektywności różnych algorytmów grafowych w znajdowaniu ścieżki w labiryncie. Wybrane algorytmy to:
+    - **A*** (A-star) – algorytm wykorzystujący heurystykę do znajdowania najkrótszej ścieżki.
+    - **Dijkstra** – algorytm znajdujący najkrótszą ścieżkę bez użycia heurystyki.
+    - **BFS** (Przeszukiwanie wszerz) – algorytm przeszukujący graf warstwowo.
+    - **DFS** (Przeszukiwanie w głąb) – algorytm przeszukujący graf w głąb.
+    
+    Projekt ma na celu pokazanie, jak różne podejścia do problemu znajdowania ścieżki wpływają na wydajność i jakość rozwiązania.
+    
+    ---
+    
+    ## Kroki implementacyjne
+    1. **Przygotowanie środowiska:**
+       - Użyto biblioteki `pygame` do stworzenia interfejsu graficznego.
+       - Zdefiniowano siatkę (grid) o rozmiarze 20x20 komórek, gdzie każda komórka może być przeszkodą lub częścią ścieżki.
+    
+    2. **Implementacja algorytmów:**
+       - Zaimplementowano cztery algorytmy: A*, Dijkstra, BFS i DFS.
+       - Każdy algorytm został przetestowany pod kątem poprawności działania na różnych konfiguracjach labiryntu.
+    
+    3. **Interfejs użytkownika:**
+       - Użytkownik może ręcznie tworzyć labirynt, dodając i usuwając przeszkody za pomocą myszy.
+       - Można ustawić punkt startowy i końcowy, a następnie uruchomić wybrany algorytm, aby znaleźć ścieżkę.
+       - Dodano przycisk do resetowania labiryntu oraz przycisk do zmiany algorytmu.
+    
+    4. **Testowanie:**
+       - Przetestowano algorytmy na różnych labiryntach, w tym na labiryntach bez rozwiązania.
+       - Zmierzono czas działania każdego algorytmu dla różnych konfiguracji labiryntu.
+    
+    ---
+    
+    ## Kluczowe wyniki
+    1. **Efektywność algorytmów:**
+       - **A*** okazał się najszybszym algorytmem w większości przypadków, szczególnie gdy heurystyka była skuteczna.
+       - **Dijkstra** działał wolniej niż A*, ale zawsze znajdował najkrótszą ścieżkę.
+       - **BFS** działał szybko, ale nie zawsze znajdował najkrótszą ścieżkę w przypadku labiryntów z wagami.
+       - **DFS** był najwolniejszy i często znajdował ścieżki, które były znacznie dłuższe niż optymalne.
+    
+    2. **Czas działania:**
+       - Dla labiryntu o rozmiarze 20x20:
+         - A*: ~5 ms
+         - Dijkstra: ~10 ms
+         - BFS: ~8 ms
+         - DFS: ~15 ms
+       - Czas działania zależał od złożoności labiryntu i liczby przeszkód.
+    
+    3. **Wnioski:**
+       - Algorytm A* jest najlepszym wyborem do znajdowania najkrótszej ścieżki w labiryntach, gdy dostępna jest dobra heurystyka.
+       - Dijkstra jest niezawodny, ale wolniejszy.
+       - BFS i DFS są przydatne w specyficznych przypadkach, ale nie zawsze gwarantują optymalne rozwiązanie.
+    
+    
