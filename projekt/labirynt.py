@@ -1,19 +1,14 @@
-
-#   https://github.com/olapolacik
-
 #  Pamiętaj o zainstalowaniu -  pip install pygame
-
-
 
 import pygame
 import sys
 import heapq
+from collections import deque
+import time
 
-# Initialize pygame
 pygame.init()
 
-# Constants
-WIDTH, HEIGHT = 800, 800
+WIDTH, HEIGHT = 800, 850
 GRID_SIZE = 20
 CELL_SIZE = WIDTH // GRID_SIZE
 WHITE = (255, 255, 255)
@@ -23,14 +18,13 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
 GRAY = (200, 200, 200)
+PINK = (255, 192, 203)
 
-# Load the background image for the menu
 MENU_BACKGROUND = pygame.image.load("projekt/mysz.PNG")
 MENU_BACKGROUND = pygame.transform.scale(MENU_BACKGROUND, (WIDTH, HEIGHT))
 
-# Screen setup
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Maze Solver")
+pygame.display.set_caption("MyszSzukaSera")
 font = pygame.font.Font(None, 74)
 small_font = pygame.font.Font(None, 36)
 
@@ -39,16 +33,15 @@ def draw_text_with_background(text, font, text_color, bg_color, surface, x, y):
     textrect = textobj.get_rect()
     textrect.center = (x, y)
     pygame.draw.rect(surface, bg_color, textrect)
-    pygame.draw.rect(surface, BLACK, textrect, 2)  # Add border
+    pygame.draw.rect(surface, BLACK, textrect, 2)
     surface.blit(textobj, textrect)
 
 def draw_text(text, font, color, surface, x, y):
     textobj = font.render(text, True, color)
     textrect = textobj.get_rect()
-    textrect.center = (x, y)
+    textrect.topleft = (x, y)
     surface.blit(textobj, textrect)
 
-# Grid initialization
 def create_grid():
     return [[0 for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
 
@@ -106,16 +99,105 @@ def a_star(grid, start, end):
 
     return []
 
+def dijkstra(grid, start, end):
+    open_set = []
+    heapq.heappush(open_set, (0, start))
+    came_from = {}
+
+    g_score = {(x, y): float('inf') for x in range(GRID_SIZE) for y in range(GRID_SIZE)}
+    g_score[start] = 0
+
+    while open_set:
+        current = heapq.heappop(open_set)[1]
+
+        if current == end:
+            path = []
+            while current in came_from:
+                path.append(current)
+                current = came_from[current]
+            return path[::-1]
+
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            neighbor = (current[0] + dx, current[1] + dy)
+            if 0 <= neighbor[0] < GRID_SIZE and 0 <= neighbor[1] < GRID_SIZE:
+                if grid[neighbor[1]][neighbor[0]] == 1:
+                    continue
+
+                tentative_g_score = g_score[current] + 1
+
+                if tentative_g_score < g_score[neighbor]:
+                    came_from[neighbor] = current
+                    g_score[neighbor] = tentative_g_score
+                    heapq.heappush(open_set, (g_score[neighbor], neighbor))
+
+    return []
+
+def bfs(grid, start, end):
+    queue = deque()
+    queue.append(start)
+    came_from = {}
+
+    visited = [[False for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
+    visited[start[1]][start[0]] = True
+
+    while queue:
+        current = queue.popleft()
+
+        if current == end:
+            path = []
+            while current in came_from:
+                path.append(current)
+                current = came_from[current]
+            return path[::-1]
+
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            neighbor = (current[0] + dx, current[1] + dy)
+            if 0 <= neighbor[0] < GRID_SIZE and 0 <= neighbor[1] < GRID_SIZE:
+                if grid[neighbor[1]][neighbor[0]] == 0 and not visited[neighbor[1]][neighbor[0]]:
+                    visited[neighbor[1]][neighbor[0]] = True
+                    came_from[neighbor] = current
+                    queue.append(neighbor)
+
+    return []
+
+def dfs(grid, start, end):
+    stack = [start]
+    came_from = {}
+
+    visited = [[False for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
+    visited[start[1]][start[0]] = True
+
+    while stack:
+        current = stack.pop()
+
+        if current == end:
+            path = []
+            while current in came_from:
+                path.append(current)
+                current = came_from[current]
+            return path[::-1]
+
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            neighbor = (current[0] + dx, current[1] + dy)
+            if 0 <= neighbor[0] < GRID_SIZE and 0 <= neighbor[1] < GRID_SIZE:
+                if grid[neighbor[1]][neighbor[0]] == 0 and not visited[neighbor[1]][neighbor[0]]:
+                    visited[neighbor[1]][neighbor[0]] = True
+                    came_from[neighbor] = current
+                    stack.append(neighbor)
+
+    return []
+
 def show_controls():
     running = True
     while running:
         screen.fill(WHITE)
-        draw_text("Controls", font, BLACK, screen, WIDTH // 2, HEIGHT // 4)
-        draw_text("Left Click: Place Wall", small_font, BLACK, screen, WIDTH // 2, HEIGHT // 4 + 50)
-        draw_text("Right Click: Remove Wall", small_font, BLACK, screen, WIDTH // 2, HEIGHT // 4 + 100)
-        draw_text("S: Set Start Point", small_font, BLACK, screen, WIDTH // 2, HEIGHT // 4 + 150)
-        draw_text("E: Set End Point", small_font, BLACK, screen, WIDTH // 2, HEIGHT // 4 + 200)
-        draw_text_with_background("Back to Menu", small_font, RED, GRAY, screen, WIDTH // 2, HEIGHT - 100)
+        draw_text("Sterowanie", font, BLACK, screen, WIDTH // 2, HEIGHT // 4)
+        draw_text("Lewa Mysz: Postaw Ścianę", small_font, BLACK, screen, WIDTH // 2, HEIGHT // 4 + 50)
+        draw_text("Prawa Mysz: Usuń Ścianę", small_font, BLACK, screen, WIDTH // 2, HEIGHT // 4 + 100)
+        draw_text("Klawisz S: Ustaw Mysz", small_font, BLACK, screen, WIDTH // 2, HEIGHT // 4 + 150)
+        draw_text("Klawisz E: Ustaw Ser", small_font, BLACK, screen, WIDTH // 2, HEIGHT // 4 + 200)
+        draw_text("Klawisz A: Zmień Algorytm", small_font, BLACK, screen, WIDTH // 2, HEIGHT // 4 + 250)
+        draw_text_with_background("Wróć Do Menu", small_font, RED, GRAY, screen, WIDTH // 2, HEIGHT - 100)
 
         pygame.display.flip()
 
@@ -131,10 +213,10 @@ def show_controls():
 def main_menu():
     running = True
     while running:
-        screen.blit(MENU_BACKGROUND, (0, 0))  # Display the background image
-        draw_text("Miłosz to ketaminiarz", font, WHITE, screen, WIDTH // 2, HEIGHT // 4)
-        draw_text_with_background("Start Game", small_font, RED, WHITE, screen, WIDTH // 2, HEIGHT // 2 - 50)
-        draw_text_with_background("Controls", small_font, RED, WHITE, screen, WIDTH // 2, HEIGHT // 2 + 50)
+        screen.blit(MENU_BACKGROUND, (0, 0))
+        draw_text_with_background("Myszy Sery i Labirynty", font, BLACK, WHITE, screen, WIDTH // 2, HEIGHT // 6)
+        draw_text_with_background("Rozpocznij Grę", small_font, RED, WHITE, screen, WIDTH // 2, HEIGHT // 2 - 50)
+        draw_text_with_background("Sterowanie", small_font, RED, WHITE, screen, WIDTH // 2, HEIGHT // 2 + 50)
 
         pygame.display.flip()
 
@@ -157,6 +239,13 @@ def main():
         elif selection == "controls":
             show_controls()
 
+ALGORITHMS = {
+    "A*": a_star,
+    "Dijkstra": dijkstra,
+    "BFS": bfs,
+    "DFS": dfs
+}
+
 def game_loop():
     clock = pygame.time.Clock()
     grid = create_grid()
@@ -164,10 +253,18 @@ def game_loop():
     end = None
     path = []
     running = True
+    current_algorithm = "A*"  
+    time_taken = 0  
 
     while running:
         screen.fill(WHITE)
         draw_grid(grid, path, start, end)
+        draw_text(f"Aktualny Algorytm: {current_algorithm}", small_font, BLACK, screen, 450, HEIGHT - 30)  
+        draw_text(f"Czas: {time_taken:.4f} ms", small_font, BLACK, screen, 20, HEIGHT - 30)  
+
+        control_button_rect = pygame.Rect(WIDTH // 2 - 150, HEIGHT - 45, 200, 50)
+        pygame.draw.rect(screen, GRAY, control_button_rect)
+        draw_text_with_background("Sterowanie", small_font, RED, GRAY, screen, WIDTH // 2.3, HEIGHT - 25)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -178,26 +275,56 @@ def game_loop():
                 x, y = pygame.mouse.get_pos()
                 x //= CELL_SIZE
                 y //= CELL_SIZE
-                grid[y][x] = 1
+                if 0 <= x < GRID_SIZE and 0 <= y < GRID_SIZE:
+                    grid[y][x] = 1
 
             if pygame.mouse.get_pressed()[2]:
                 x, y = pygame.mouse.get_pos()
                 x //= CELL_SIZE
                 y //= CELL_SIZE
-                grid[y][x] = 0
+                if 0 <= x < GRID_SIZE and 0 <= y < GRID_SIZE:
+                    grid[y][x] = 0
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_s:
                     x, y = pygame.mouse.get_pos()
-                    start = (x // CELL_SIZE, y // CELL_SIZE)
+                    x //= CELL_SIZE
+                    y //= CELL_SIZE
+                    if 0 <= x < GRID_SIZE and 0 <= y < GRID_SIZE:
+                        start = (x, y)
+
                 if event.key == pygame.K_e:
                     x, y = pygame.mouse.get_pos()
-                    end = (x // CELL_SIZE, y // CELL_SIZE)
+                    x //= CELL_SIZE
+                    y //= CELL_SIZE
+                    if 0 <= x < GRID_SIZE and 0 <= y < GRID_SIZE:
+                        end = (x, y)
+
                 if event.key == pygame.K_SPACE and start and end:
-                    path = a_star(grid, start, end)
+                    start_time = time.time()
+                    path = ALGORITHMS[current_algorithm](grid, start, end)
+                    end_time = time.time()
+                    time_taken = (end_time - start_time) * 1000
+                    print(f"{current_algorithm} took {time_taken:.4f} ms")
+
+                if event.key == pygame.K_r:
+                    grid = create_grid()
+                    start = None
+                    end = None
+                    path = []
+                    time_taken = 0
+
+                if event.key == pygame.K_a:
+                    algorithms_list = list(ALGORITHMS.keys())
+                    current_index = algorithms_list.index(current_algorithm)
+                    current_algorithm = algorithms_list[(current_index + 1) % len(algorithms_list)]
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = pygame.mouse.get_pos()
+                if control_button_rect.collidepoint(x, y):
+                    show_controls()
 
         pygame.display.flip()
         clock.tick(30)
-
 if __name__ == "__main__":
     main()
