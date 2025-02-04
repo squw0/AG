@@ -1,1 +1,254 @@
-uwu
+
+ALGORYTMY GRAFOWE - ROZBUDOWANA NOTATKA NA EGZAMIN
+
+1. Reprezentacje grafu:
+   - **Macierz sąsiedztwa**: 2D tablica, gdzie A[i][j] = 1 oznacza istnienie krawędzi między i a j.
+   - **Lista sąsiedztwa**: dla każdego wierzchołka przechowujemy listę sąsiadów.
+   - **Lista krawędzi**: lista par (u, v) reprezentujących krawędzie.
+
+   **Przykład kodu (lista sąsiedztwa):**
+   ```python
+   graph = {
+       'A': ['B', 'C'],
+       'B': ['A', 'D', 'E'],
+       'C': ['A', 'F'],
+       'D': ['B'],
+       'E': ['B', 'F'],
+       'F': ['C', 'E']
+   }
+   ```
+
+2. Wyszukiwanie wszerz (BFS) i wyszukiwanie w głąb (DFS):
+   - **BFS (Breadth-First Search)**: przeszukiwanie poziomami, używa kolejki.
+   - **DFS (Depth-First Search)**: przeszukiwanie w głąb, używa stosu lub rekursji.
+
+   **BFS - kod w Pythonie:**
+   ```python
+   from collections import deque
+
+   def bfs(graph, start):
+       visited = set()
+       queue = deque([start])
+       while queue:
+           vertex = queue.popleft()
+           if vertex not in visited:
+               print(vertex, end=" ")
+               visited.add(vertex)
+               queue.extend(set(graph[vertex]) - visited)
+   ```
+
+   **DFS - kod w Pythonie:**
+   ```python
+   def dfs(graph, start, visited=None):
+       if visited is None:
+           visited = set()
+       visited.add(start)
+       print(start, end=" ")
+       for neighbor in graph[start]:
+           if neighbor not in visited:
+               dfs(graph, neighbor, visited)
+   ```
+
+3. (Silnie) spójne komponenty:
+   - **Komponent spójny**: podzbiór wierzchołków, gdzie każdy jest osiągalny z każdego innego.
+   - **Silnie spójny komponent** (graf skierowany): każdy wierzchołek jest osiągalny z każdego innego.
+
+   **Algorytm Kosaraju do znajdowania silnie spójnych komponentów:**
+   ```python
+   def kosaraju(graph):
+       stack = []
+       visited = set()
+       for node in graph:
+           if node not in visited:
+               dfs_fill_order(graph, node, visited, stack)
+       transposed_graph = transpose(graph)
+       visited.clear()
+       while stack:
+           node = stack.pop()
+           if node not in visited:
+               component = []
+               dfs_collect(transposed_graph, node, visited, component)
+               print("Component:", component)
+   ```
+
+4. Sortowanie topologiczne:
+   - **Dla acyklicznych grafów skierowanych (DAG)**.
+   - **Algorytm DFS**: zapisujemy wierzchołki po zakończeniu ich przetwarzania, wynik w odwrotnej kolejności.
+
+   **Kod sortowania topologicznego:**
+   ```python
+   def topological_sort(graph):
+       visited = set()
+       stack = []
+
+       def dfs(node):
+           if node not in visited:
+               visited.add(node)
+               for neighbor in graph[node]:
+                   dfs(neighbor)
+               stack.append(node)
+
+       for node in graph:
+           dfs(node)
+       return stack[::-1]
+   ```
+
+5. Minimalne drzewo rozpinające - Algorytmy Kruskala i Prima:
+   - **Kruskal**: sortowanie krawędzi i dodawanie ich do drzewa, jeśli nie tworzą cyklu.
+   - **Prim**: zaczynamy od wierzchołka i dodajemy najtańsze krawędzie.
+
+   **Algorytm Kruskala:**
+   ```python
+   class DisjointSet:
+       def __init__(self, vertices):
+           self.parent = {v: v for v in vertices}
+
+       def find(self, v):
+           if self.parent[v] != v:
+               self.parent[v] = self.find(self.parent[v])
+           return self.parent[v]
+
+       def union(self, u, v):
+           root_u = self.find(u)
+           root_v = self.find(v)
+           if root_u != root_v:
+               self.parent[root_u] = root_v
+
+   def kruskal(graph):
+       edges = sorted(graph['edges'], key=lambda e: e[2])
+       ds = DisjointSet(graph['vertices'])
+       mst = []
+       for u, v, weight in edges:
+           if ds.find(u) != ds.find(v):
+               ds.union(u, v)
+               mst.append((u, v, weight))
+       return mst
+   ```
+
+6. Znajdowanie cyklu lub ścieżki Eulera. Algorytm Fleury'ego:
+   - **Ścieżka Eulera**: odwiedza każdą krawędź dokładnie raz.
+   - **Algorytm Fleury'ego**: usuwa krawędzie jedna po drugiej, unikając odcięcia grafu.
+
+   **Algorytm Fleury'ego:**
+   ```python
+   def fleury(graph, start):
+       def is_bridge(u, v):
+           original_components = count_components(graph)
+           graph[u].remove(v)
+           graph[v].remove(u)
+           new_components = count_components(graph)
+           graph[u].append(v)
+           graph[v].append(u)
+           return new_components > original_components
+
+       def count_components(graph):
+           visited = set()
+           count = 0
+           for node in graph:
+               if node not in visited:
+                   dfs(graph, node, visited)
+                   count += 1
+           return count
+
+       path = [start]
+       current = start
+       while any(graph.values()):
+           for neighbor in graph[current]:
+               if len(graph[current]) == 1 or not is_bridge(current, neighbor):
+                   path.append(neighbor)
+                   graph[current].remove(neighbor)
+                   graph[neighbor].remove(current)
+                   current = neighbor
+                   break
+       return path
+   ```
+
+7. Znajdowanie cyklu lub ścieżki Hamiltona:
+   - **Ścieżka Hamiltona**: odwiedza każdy wierzchołek dokładnie raz.
+   - **Problem NP-zupełny**, często rozwiązywany metodami heurystycznymi.
+
+   **Przykładowy algorytm backtrackingowy:**
+   ```python
+   def hamiltonian_path(graph, start, path=[]):
+       path = path + [start]
+       if len(path) == len(graph):
+           return path
+       for neighbor in graph[start]:
+           if neighbor not in path:
+               new_path = hamiltonian_path(graph, neighbor, path)
+               if new_path:
+                   return new_path
+       return None
+   ```
+
+8. Problem najkrótszej ścieżki: Algorytm Floyda-Warshalla:
+   - **Dynamiczne programowanie**, działa dla wszystkich par wierzchołków.
+   - O(n^3) złożoność czasowa.
+
+   **Algorytm Floyda-Warshalla:**
+   ```python
+   def floyd_warshall(graph):
+       dist = {u: {v: float('inf') for v in graph} for u in graph}
+       for u in graph:
+           dist[u][u] = 0
+           for v in graph[u]:
+               dist[u][v] = graph[u][v]
+
+       for k in graph:
+           for i in graph:
+               for j in graph:
+                   if dist[i][j] > dist[i][k] + dist[k][j]:
+                       dist[i][j] = dist[i][k] + dist[k][j]
+       return dist
+   ```
+
+9. Problem najkrótszej ścieżki: Algorytm Dijkstry:
+   - **Znajduje najkrótszą ścieżkę** z jednego źródła do wszystkich wierzchołków.
+   - **Działa dla grafów bez ujemnych wag**, używa kolejki priorytetowej.
+
+   **Algorytm Dijkstry:**
+   ```python
+   import heapq
+
+   def dijkstra(graph, start):
+       pq = [(0, start)]
+       distances = {vertex: float('inf') for vertex in graph}
+       distances[start] = 0
+
+       while pq:
+           current_distance, current_vertex = heapq.heappop(pq)
+
+           if current_distance > distances[current_vertex]:
+               continue
+
+           for neighbor, weight in graph[current_vertex].items():
+               distance = current_distance + weight
+               if distance < distances[neighbor]:
+                   distances[neighbor] = distance
+                   heapq.heappush(pq, (distance, neighbor))
+       return distances
+   ```
+
+10. Problem najkrótszej ścieżki: Algorytm Bellmana-Forda:
+    - **Obsługuje grafy z ujemnymi wagami**, ale nie z cyklami ujemnymi.
+    - **Relaksacja krawędzi przez V-1 iteracji**.
+
+    **Algorytm Bellmana-Forda:**
+    ```python
+    def bellman_ford(graph, start):
+        distance = {vertex: float('inf') for vertex in graph}
+        distance[start] = 0
+
+        for _ in range(len(graph) - 1):
+            for u in graph:
+                for v, w in graph[u].items():
+                    if distance[u] + w < distance[v]:
+                        distance[v] = distance[u] + w
+
+        for u in graph:
+            for v, w in graph[u].items():
+                if distance[u] + w < distance[v]:
+                    raise ValueError("Graph contains a negative weight cycle")
+
+        return distance
+    ```
